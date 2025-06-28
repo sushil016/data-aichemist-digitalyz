@@ -1,0 +1,574 @@
+# 🚀 Data Alchemist - AI Resource Allocation Configurator
+## Complete Assignment Brief for GitHub Copilot
+
+---
+
+## 📋 PROJECT OVERVIEW
+
+**Project Name:** Data Alchemist - AI-Powered Resource Allocation Configurator  
+**Framework:** Next.js 14+ with TypeScript  
+**Timeline:** 2.5 days for MVP, extensible for advanced features  
+**Primary Goal:** Build a smart web application that processes messy CSV/XLSX files (clients, workers, tasks) and helps users clean, validate, and configure business rules for resource allocation.
+
+**User Journey:**
+1. Upload 3 CSV/XLSX files (clients, workers, tasks)
+2. AI automatically maps headers and displays data in editable grids
+3. System validates data and highlights errors in real-time
+4. Users fix errors with inline editing
+5. Users create business rules using natural language or UI
+6. Users set priority weights for allocation criteria
+7. Export clean data + rules.json for downstream systems
+
+---
+
+## 🗂️ DATA STRUCTURE
+
+### **Client Entity (clients.csv)**
+```typescript
+interface Client {
+  ClientID: string;           // Unique identifier (C001, C002, etc.)
+  ClientName: string;         // Display name
+  PriorityLevel: number;      // 1-5 (5 = highest priority)
+  RequestedTaskIDs: string[]; // Array of TaskIDs they want ["T001", "T002"]
+  GroupTag: string;           // Group classification ("Enterprise", "SMB")
+  AttributesJSON: string;     // JSON metadata {"budget": 50000, "deadline": "2024-Q2"}
+}
+```
+
+### **Worker Entity (workers.csv)**
+```typescript
+interface Worker {
+  WorkerID: string;           // Unique identifier (W001, W002, etc.)
+  WorkerName: string;         // Display name
+  Skills: string[];           // Skill tags ["JavaScript", "React", "Node.js"]
+  AvailableSlots: number[];   // Available phases [1, 3, 5, 7]
+  MaxLoadPerPhase: number;    // Max tasks per phase (1-10)
+  WorkerGroup: string;        // Group classification ("Frontend", "Backend", "FullStack")
+  QualificationLevel: number; // Experience level 1-5
+}
+```
+
+### **Task Entity (tasks.csv)**
+```typescript
+interface Task {
+  TaskID: string;             // Unique identifier (T001, T002, etc.)
+  TaskName: string;           // Display name
+  Category: string;           // Task category ("Development", "Testing", "Design")
+  Duration: number;           // Number of phases required (1-10)
+  RequiredSkills: string[];   // Required skills ["React", "TypeScript"]
+  PreferredPhases: number[];  // Preferred execution phases [2, 3, 4]
+  MaxConcurrent: number;      // Max parallel assignments (1-5)
+}
+```
+
+### **Supporting Interfaces**
+```typescript
+interface ValidationError {
+  id: string;                 // Unique error ID
+  entityType: 'client' | 'worker' | 'task';
+  entityId: string;           // ClientID/WorkerID/TaskID
+  row: number;                // Row index in data
+  column: string;             // Column name
+  field: string;              // Field name in interface
+  message: string;            // Human-readable error message
+  severity: 'error' | 'warning' | 'info';
+  suggestedFix?: string;      // AI-suggested correction
+  autoFixable: boolean;       // Can be auto-corrected
+}
+
+interface BusinessRule {
+  id: string;                 // Unique rule ID
+  type: 'coRun' | 'slotRestriction' | 'loadLimit' | 'phaseWindow' | 'patternMatch' | 'precedence';
+  name: string;               // Human-readable name
+  description: string;        // Rule description
+  parameters: Record<string, any>; // Rule-specific parameters
+  active: boolean;            // Rule enabled/disabled
+  priority: number;           // Rule priority (1-10)
+  createdBy: 'user' | 'ai';   // Rule creation source
+}
+
+interface PriorityWeights {
+  clientPriority: number;     // Weight for client priority level (0-100)
+  taskUrgency: number;        // Weight for task urgency (0-100)
+  workerEfficiency: number;   // Weight for worker efficiency (0-100)
+  fairDistribution: number;   // Weight for fair task distribution (0-100)
+  skillMatch: number;         // Weight for skill matching (0-100)
+  costOptimization: number;   // Weight for cost optimization (0-100)
+}
+```
+
+---
+
+## 🎯 MILESTONE 1: CORE FOUNDATION 
+
+### **1.1 Data Ingestion System**
+**Requirements:**
+- Support CSV and XLSX file uploads
+- Handle files up to 10MB
+- Parse 3 entity types simultaneously
+- Smart header mapping with AI assistance
+- Real-time parsing feedback
+
+**Key Features:**
+```typescript
+// AI-powered header mapping examples:
+"Client ID" → "ClientID"
+"Client_Name" → "ClientName"  
+"Priority" → "PriorityLevel"
+"Requested Tasks" → "RequestedTaskIDs"
+"Skills Set" → "Skills"
+"Available Time Slots" → "AvailableSlots"
+```
+
+**Implementation Details:**
+- Use `react-dropzone` for file upload UI
+- Use `xlsx` library for Excel files
+- Use `papaparse` for CSV files
+- Implement fuzzy string matching for header detection
+- Store parsed data in Zustand state management
+
+### **1.2 Data Validation Engine**
+**Core Validations (Minimum 8 Required):**
+
+1. **Missing Required Fields**
+   - Check all mandatory columns exist
+   - Validate non-empty essential fields
+
+2. **Duplicate ID Validation**
+   - No duplicate ClientIDs, WorkerIDs, TaskIDs
+   - Cross-file duplicate detection
+
+3. **Data Type Validation**
+   - Numbers in numeric fields
+   - Arrays properly formatted
+   - JSON strings parseable
+
+4. **Range Validation**
+   - PriorityLevel: 1-5 only
+   - Duration: >= 1
+   - QualificationLevel: 1-5
+   - MaxLoadPerPhase: 1-10
+
+5. **Reference Integrity**
+   - RequestedTaskIDs exist in tasks
+   - Skills mentioned in tasks exist in at least one worker
+   - Referenced IDs are valid
+
+6. **Business Logic Validation**
+   - Worker AvailableSlots.length >= MaxLoadPerPhase
+   - Sum of task durations per phase <= total worker slots
+   - Every RequiredSkill maps to ≥1 worker
+
+7. **Format Validation**
+   - AttributesJSON is valid JSON
+   - Arrays properly comma-separated
+   - Phase numbers are valid integers
+
+8. **Circular Dependency Detection**
+   - Detect circular co-run groups
+   - Validate rule conflicts
+
+### **1.3 Data Grid with Inline Editing**
+**Requirements:**
+- Use AG-Grid Community Edition
+- Support inline cell editing
+- Real-time validation on cell change
+- Visual error highlighting
+- Column sorting and filtering
+- Responsive design
+
+**Features:**
+```typescript
+// AG-Grid column definitions for each entity
+// Error highlighting with CSS classes
+// Cell editors for different data types
+// Custom cell renderers for arrays and JSON
+// Real-time validation integration
+```
+
+---
+
+## 🎯 MILESTONE 2: BUSINESS RULES & PRIORITIZATION 
+
+### **2.1 Natural Language Data Retrieval**
+**Requirements:**
+- Process plain English queries
+- Support complex filtering conditions
+- Real-time search results
+- Query suggestions and autocomplete
+
+**Example Queries to Support:**
+```
+"Show all high priority clients"
+"Find workers with React and Node.js skills"
+"Tasks with duration more than 3 phases"
+"Workers available in phases 2 and 3"
+"Clients requesting more than 5 tasks"
+"Tasks requiring skills that no worker has"
+```
+
+**Implementation:**
+- NLP query parser
+- Query-to-filter conversion
+- Autocomplete with suggestions
+- Search history and saved queries
+
+### **2.2 Rule Input UI System**
+**Rule Types to Support:**
+
+1. **Co-Run Rules**
+   - Select multiple TaskIDs
+   - Group tasks to run together
+   - UI: Multi-select dropdown
+
+2. **Slot Restriction Rules**
+   - Define ClientGroup or WorkerGroup
+   - Set minimum common slots
+   - UI: Group selector + number input
+
+3. **Load Limit Rules**
+   - Select WorkerGroup
+   - Set max slots per phase
+   - UI: Group selector + slider
+
+4. **Phase Window Rules**
+   - Pick TaskID
+   - Define allowed phase range
+   - UI: Task selector + phase range picker
+
+5. **Pattern Match Rules**
+   - Enter regex pattern
+   - Choose rule template
+   - Set parameters
+   - UI: Regex input + template dropdown
+
+6. **Precedence Override Rules**
+   - Define rule priority order
+   - Global vs specific rules
+   - UI: Drag-and-drop priority list
+
+### **2.3 Prioritization & Weights Interface**
+**Four Interface Options:**
+
+1. **Sliders Interface**
+   - Weight sliders for each criterion (0-100)
+   - Real-time weight distribution visualization
+   - Percentage display with normalization
+
+2. **Drag-and-Drop Ranking**
+   - Reorderable list of criteria
+   - Visual ranking with importance levels
+   - Automatic weight calculation
+
+3. **Pairwise Comparison Matrix**
+   - Compare criteria two-at-a-time
+   - Analytic Hierarchy Process (AHP)
+   - Consistency ratio calculation
+
+4. **Preset Profiles**
+   - "Maximize Client Satisfaction"
+   - "Optimize Resource Utilization"
+   - "Ensure Fair Distribution"
+   - "Minimize Costs"
+   - "Speed Over Quality"
+
+### **2.4 Natural Language Rule Converter**
+**Requirements:**
+- Convert plain English to structured rules
+- Context understanding from uploaded data
+- Rule validation and conflict detection
+- Integration with visual rule builder
+
+**Example Conversions:**
+```
+"Tasks T001 and T002 should always run together"
+→ { type: "coRun", tasks: ["T001", "T002"] }
+
+"Frontend team shouldn't work more than 3 tasks per phase"
+→ { type: "loadLimit", group: "Frontend", maxSlots: 3 }
+
+"High priority tasks must run in first 3 phases"
+→ { type: "phaseWindow", condition: "priority=high", phases: [1,2,3] }
+```
+
+---
+
+## 🎯 MILESTONE 3: ADVANCED AI FEATURES 
+
+### **3.1 Natural Language Data Modification**
+**Requirements:**
+- Process modification commands in plain English
+- High accuracy data change suggestions
+- User confirmation before applying changes
+- Undo/redo functionality
+
+**Example Commands:**
+```
+"Set all Enterprise clients to priority level 5"
+"Remove React skill from workers who don't have JavaScript"
+"Increase duration by 1 for all Testing category tasks"
+"Move all workers from Frontend group to FullStack group"
+```
+
+### **3.2 AI Rule Recommendations**
+**Requirements:**
+- Analyze data patterns automatically
+- Suggest relevant business rules
+- Contextual recommendations based on data
+- Accept/reject/modify workflow
+
+**Recommendation Types:**
+```
+Pattern: "Tasks T12 and T14 appear in 80% of client requests"
+Suggestion: "Add Co-run rule for T12 and T14?"
+
+Pattern: "Frontend workers are overloaded in phase 3"
+Suggestion: "Set Load-limit rule for Frontend group?"
+
+Pattern: "Enterprise clients always request high-duration tasks"
+Suggestion: "Create Phase-window rule prioritizing Enterprise clients?"
+```
+
+### **3.3 AI-Based Error Correction**
+**Requirements:**
+- Detect data gaps and inconsistencies
+- Provide specific fix suggestions
+- One-click correction application
+- Learning from user corrections
+
+**Correction Examples:**
+```
+Error: "Worker W005 has skill 'Reactjs' but tasks reference 'React'"
+Fix: "Standardize to 'React'? Auto-fix 12 similar cases?"
+
+Error: "Client C003 requests non-existent task T099"
+Fix: "Did you mean T090? Or remove from request list?"
+
+Error: "Phase slots overbooked in Phase 2 by 150%"
+Fix: "Extend to Phase 3? Or reduce task durations?"
+```
+
+### **3.4 Enhanced AI Validator**
+**Requirements:**
+- Context-aware validation rules
+- Dynamic rule generation
+- Pattern-based anomaly detection
+- Predictive validation
+
+**Advanced Validations:**
+- Seasonal workload patterns
+- Skill demand vs supply analysis
+- Client satisfaction predictions
+- Resource utilization optimization
+- Bottleneck identification
+
+---
+
+## 🛠️ TECHNICAL IMPLEMENTATION STACK
+
+### **Core Technologies:**
+- **Framework:** Next.js 14+ with App Router
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS + Shadcn/UI components
+- **State Management:** Zustand
+- **Data Grid:** AG-Grid Community Edition
+- **File Processing:** XLSX + PapaParse
+- **Validation:** Zod schemas
+- **AI Integration:** OpenAI API or Anthropic Claude
+
+---
+
+## 🎨 UI/UX REQUIREMENTS
+
+### **Design Principles:**
+- **Clean and Professional:** Modern, minimalist interface
+- **Responsive:** Works on desktop, tablet, and mobile
+- **Accessible:** WCAG 2.1 compliant
+- **Fast:** Optimized for large datasets
+- **Intuitive:** Self-explanatory UI with helpful tooltips
+
+### **Color Scheme:**
+```css
+/* Primary Colors */
+--primary:rgb(231, 240, 255);     
+--secondary:rgb(203, 250, 234);    
+--accent:rgb(40, 40, 40);       
+--error: #ef4444;        /* Red */
+--warning: #f59e0b;      /* Orange */
+--success:rgb(16, 243, 167);      /* Green */
+
+/* Neutral Colors */
+--background: #ffffff;
+--foreground: #0f172a;
+--muted: #f1f5f9;
+--border: #e2e8f0;
+```
+
+### **Layout Components:**
+1. **Header:** Logo, title, export button
+2. **File Upload Area:** 3 drop zones for each entity type
+3. **Data Tabs:** Switch between entities with error badges
+4. **Data Grid:** Main data display with inline editing
+5. **Validation Panel:** Collapsible error summary
+6. **Rule Builder:** Modal/sidebar for rule creation
+7. **Priority Settings:** Modal for weight configuration
+8. **AI Assistant:** Chat-like interface for NL interactions
+
+---
+
+## 📊 SAMPLE DATA & TEST CASES
+
+### **Sample Clients Data:**
+```csv
+ClientID,ClientName,PriorityLevel,RequestedTaskIDs,GroupTag,AttributesJSON
+C001,Acme Corp,5,"T001,T003,T005",Enterprise,"{\"budget\":100000,\"deadline\":\"2024-Q2\"}"
+C002,StartupXYZ,3,"T002,T004",SMB,"{\"budget\":25000,\"urgent\":true}"
+C003,MegaCorp,4,"T001,T002,T006",Enterprise,"{\"budget\":150000,\"regions\":[\"US\",\"EU\"]}"
+```
+
+### **Sample Workers Data:**
+```csv
+WorkerID,WorkerName,Skills,AvailableSlots,MaxLoadPerPhase,WorkerGroup,QualificationLevel
+W001,John Doe,"React,TypeScript,Node.js","[1,2,3,4]",3,Frontend,4
+W002,Jane Smith,"Python,Django,PostgreSQL","[2,3,5,6]",4,Backend,5
+W003,Bob Wilson,"React,Node.js,Python","[1,3,4,5,6]",3,FullStack,3
+```
+
+### **Sample Tasks Data:**
+```csv
+TaskID,TaskName,Category,Duration,RequiredSkills,PreferredPhases,MaxConcurrent
+T001,User Authentication,Development,2,"React,Node.js","[1,2]",2
+T002,Database Design,Development,3,"Python,PostgreSQL","[1,2,3]",1
+T003,Frontend Dashboard,Development,4,"React,TypeScript","[2,3,4,5]",2
+```
+
+### **Edge Cases to Test:**
+- Files with missing columns
+- Duplicate IDs across entities
+- Malformed JSON in AttributesJSON
+- Invalid array formats
+- Out-of-range values
+- Circular rule dependencies
+- Overloaded workers
+- Impossible skill requirements
+
+---
+
+## 🎯 SUCCESS CRITERIA
+
+### **Milestone 1 Completion:**
+- [ ] Successfully parse and display all 3 entity types
+- [ ] Implement at least 8 core validation rules
+- [ ] Real-time error highlighting in data grid
+- [ ] Inline editing with immediate validation
+- [ ] Responsive UI with clean design
+
+### **Milestone 2 Completion:**
+- [ ] Natural language search functionality
+- [ ] Complete rule builder with all 6 rule types
+- [ ] Priority weights interface (at least 2 methods)
+- [ ] Natural language to rule conversion
+- [ ] Export functionality for data + rules
+
+### **Milestone 3 Completion:**
+- [ ] AI-powered data modification
+- [ ] Intelligent rule recommendations
+- [ ] Automated error correction suggestions
+- [ ] Advanced AI validation rules
+- [ ] Production-ready polish
+
+### **Overall Success Metrics:**
+1. **Functionality:** All core features working correctly
+2. **Performance:** Handle 1000+ rows per entity smoothly
+3. **Usability:** Non-technical users can use effectively
+4. **Accuracy:** AI suggestions are 80%+ accurate
+5. **Reliability:** No data loss, robust error handling
+
+---
+
+## 🚀 AUTOCOMPLETE & COPILOT PROMPTS
+
+### **File Creation Prompts:**
+```typescript
+// Use these exact comments at the top of files for Copilot context:
+
+/**
+ * @fileoverview Data Alchemist - [Component Name]
+ * @description [Specific functionality]
+ * @requirements [Key requirements from assignment]
+ * @integrations [Other components this connects to]
+ * @ai-features [AI capabilities to implement]
+ */
+```
+
+### **Component Generation Prompts:**
+```
+// For FileUpload component:
+"Create React component for drag-and-drop file upload supporting CSV/XLSX with AI-powered header mapping and real-time parsing feedback"
+
+// For DataGrid component:
+"Create AG-Grid React component with inline editing, validation error highlighting, and real-time updates from Zustand store"
+
+// For ValidationPanel component:
+"Create validation summary panel showing grouped errors with severity levels and auto-fix suggestions"
+```
+
+### **Logic Implementation Prompts:**
+```
+// For validation engine:
+"Implement comprehensive data validator checking duplicate IDs, reference integrity, range validation, and business logic constraints"
+
+// For rule engine:
+"Create business rule engine supporting co-run, load-limit, phase-window rules with conflict detection and priority handling"
+
+// For AI integration:
+"Implement OpenAI integration for natural language query processing with context awareness of client/worker/task data structure"
+```
+
+### **Autocomplete Triggers:**
+```typescript
+// Type these patterns to trigger specific Copilot completions:
+
+// For interface definitions:
+interface ValidationRule extends BaseRule {
+  // Copilot will suggest properties
+
+// For validation functions:
+function validateClientData(clients: Client[]): ValidationError[] {
+  // Copilot will generate validation logic
+
+// For AI integration:
+async function processNaturalLanguageQuery(query: string, context: DataContext) {
+  // Copilot will suggest OpenAI API integration
+
+// For component props:
+interface DataGridProps {
+  // Copilot will suggest appropriate props based on context
+```
+
+---
+
+## 📋 FINAL DELIVERABLES
+
+### **Core Application:**
+1. Working Next.js application with all features
+2. TypeScript interfaces and type safety
+3. Comprehensive validation system
+4. AI-powered enhancements
+5. Clean, professional UI
+
+### **Export Functionality:**
+1. Clean CSV files for all entities
+2. Structured rules.json file
+3. Priority weights configuration
+4. Validation summary report
+
+### **Documentation:**
+1. README with setup instructions
+2. API documentation for AI features
+3. User guide for business users
+4. Technical documentation for developers
+
+---
+
+**This assignment brief provides complete context for GitHub Copilot to understand the project scope, technical requirements, and implementation details. Use specific sections as prompts when working on individual components.**
