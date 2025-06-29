@@ -50,6 +50,8 @@ export default function AIErrorCorrectionPanel({
         context: { clients, workers, tasks }
       });
 
+      console.log('AI Error Corrections received:', corrections);
+
       setErrorsWithCorrections(prev => 
         prev.map((e, i) => i === errorIndex ? { 
           ...e, 
@@ -91,13 +93,21 @@ export default function AIErrorCorrectionPanel({
   // Apply a suggested correction
   const applySuggestion = (errorIndex: number, suggestionIndex: number) => {
     const error = errorsWithCorrections[errorIndex];
-    const suggestion = error.corrections?.suggestions[suggestionIndex];
+    const suggestion = error.corrections?.suggestions?.[suggestionIndex];
     
-    if (!suggestion) return;
+    if (!suggestion || !suggestion.changes || !Array.isArray(suggestion.changes)) {
+      console.error('Invalid suggestion structure:', suggestion);
+      return;
+    }
 
     try {
       // Apply each change in the suggestion
       suggestion.changes.forEach(change => {
+        if (!change || !change.entityType || !change.entityId || !change.field) {
+          console.error('Invalid change structure:', change);
+          return;
+        }
+        
         switch (change.entityType) {
           case 'client':
             actions.updateClient(change.entityId, { [change.field]: change.newValue });
@@ -108,6 +118,8 @@ export default function AIErrorCorrectionPanel({
           case 'task':
             actions.updateTask(change.entityId, { [change.field]: change.newValue });
             break;
+          default:
+            console.error('Unknown entity type:', change.entityType);
         }
       });
 
@@ -229,7 +241,7 @@ export default function AIErrorCorrectionPanel({
                         <span className="font-medium">AI Confidence: {Math.round(error.corrections.confidence * 100)}%</span>
                       </div>
                       
-                      {error.corrections.suggestions.map((suggestion, suggestionIndex) => (
+                      {(error.corrections.suggestions && Array.isArray(error.corrections.suggestions)) && error.corrections.suggestions.map((suggestion, suggestionIndex) => (
                         <div key={suggestionIndex} className="bg-white/50 rounded-lg p-3">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -254,9 +266,9 @@ export default function AIErrorCorrectionPanel({
                           
                           {/* Changes Preview */}
                           <div className="space-y-1">
-                            {suggestion.changes.map((change, changeIndex) => (
+                            {(suggestion.changes && Array.isArray(suggestion.changes)) && suggestion.changes.map((change, changeIndex) => (
                               <div key={changeIndex} className="text-xs font-mono bg-current/10 p-2 rounded">
-                                <strong>{change.entityType.toUpperCase()} {change.entityId}</strong>
+                                <strong>{change.entityType?.toUpperCase()} {change.entityId}</strong>
                                 <br />
                                 {change.field}: {JSON.stringify(change.oldValue)} → {JSON.stringify(change.newValue)}
                               </div>

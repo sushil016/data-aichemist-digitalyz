@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aichemist-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aichemist
+  template:
+    metadata:
+      labels:
+        app: aichemist
+    spec:
+      imagePullSecrets:
+        - name: artifact-registry-secret
+      containers:
+        - name: aichemist-container
+          image: arcadereg.azurecr.io/data-aichemis:latest
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aichemist-service
+spec:
+  type: ClusterIP
+  selector:
+    app: aichemist
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+

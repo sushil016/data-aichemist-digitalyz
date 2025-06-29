@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { Anthropic } from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -65,7 +65,7 @@ Return ONLY valid JSON, no other text.
 `;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-sonnet-20241022',
+      model: "claude-sonnet-4-20250514",
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -75,7 +75,19 @@ Return ONLY valid JSON, no other text.
 
     const content = response.content[0];
     if (content.type === 'text') {
-      const result = JSON.parse(content.text);
+      let jsonText = content.text;
+      
+      // Handle markdown code blocks
+      if (jsonText.includes('```json')) {
+        jsonText = jsonText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+      } else if (jsonText.includes('```')) {
+        jsonText = jsonText.replace(/```\s*/, '').replace(/```\s*$/, '');
+      }
+      
+      // Clean up any extra whitespace
+      jsonText = jsonText.trim();
+      
+      const result = JSON.parse(jsonText);
       return NextResponse.json(result);
     }
 

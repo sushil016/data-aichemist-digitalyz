@@ -1,0 +1,13 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: aichemist-public-httproute
+spec:
+  parentRefs:
+    - name: aichemist-gateway
+  hostnames:
+    - "hfgvgfgghxbud3g6.fz78.alb.azure.com"
+  rules:
+    - backendRefs:
+        - name: aichemist-service
+          port: 80

@@ -1,0 +1,57 @@
+# Data Alchemist - Docker Compose Configuration
+# For development, testing, and production deployment
+
+version: '3.8'
+
+services:
+  # Main application service
+  data-alchemist:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: data-alchemist-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      # Mount environment variables from .env.local
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.data-alchemist.rule=Host(`localhost`)"
+      - "traefik.http.services.data-alchemist.loadbalancer.server.port=3000"
+
+  # Development service (alternative)
+  data-alchemist-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: data-alchemist-dev
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - NEXT_PUBLIC_APP_URL=http://localhost:3001
+    command: npm run dev
+    profiles:
+      - dev
+
+networks:
+  default:
+    name: data-alchemist-network

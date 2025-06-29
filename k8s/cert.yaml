@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: letsencrypt-cert-aichemist
+spec:
+  secretName: letsencrypt-secret-aichemist # name published to secret store
+  issuerRef:
+    name: letsencrypt-aichemist # ClusterIssuer resource name
+    kind: ClusterIssuer
+  dnsNames:
+    - hfgvgfgghxbud3g6.fz78.alb.azure.com # domain name to be used
+
+#$kubectl get gateway gateway-01 -n test-infra -o jsonpath='{.status.addresses[0].value}'

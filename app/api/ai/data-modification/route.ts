@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { Anthropic } from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -12,6 +12,21 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY not configured');
+      return NextResponse.json(
+        {
+          understood: false,
+          confidence: 0,
+          changes: [],
+          summary: 'AI service not configured - missing API key',
+          warnings: ['ANTHROPIC_API_KEY environment variable not set']
+        },
+        { status: 500 }
+      );
+    }
+
     const { command, context } = await request.json();
 
     if (!command || !context) {
@@ -59,25 +74,105 @@ IMPORTANT: Only suggest changes that are safe and make sense. If the command is 
 Return ONLY valid JSON, no other text.
 `;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-3-sonnet-20241022',
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
-    });
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        messages: [{
+          role: "user",
+          content: prompt
+        }]
+      });
 
-    const content = response.content[0];
-    if (content.type === 'text') {
-      const result = JSON.parse(content.text);
-      return NextResponse.json(result);
+      const content = response.content[0];
+      if (content.type === 'text') {
+        let jsonText = content.text;
+        
+        // Handle markdown code blocks
+        if (jsonText.includes('```json')) {
+          jsonText = jsonText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+        } else if (jsonText.includes('```')) {
+          jsonText = jsonText.replace(/```\s*/, '').replace(/```\s*$/, '');
+        }
+        
+        // Clean up any extra whitespace
+        jsonText = jsonText.trim();
+        
+        const result = JSON.parse(jsonText);
+        return NextResponse.json(result);
+      }
+
+      return NextResponse.json(
+        { error: 'Unexpected response format' },
+        { status: 500 }
+      );
+    } catch (anthropicError: any) {
+      console.error('Anthropic API Error:', {
+        message: anthropicError.message,
+        status: anthropicError.status,
+        type: anthropicError.type,
+        error: anthropicError
+      });
+
+      // Handle specific Anthropic errors
+      if (anthropicError.status === 401) {
+        return NextResponse.json(
+          {
+            understood: false,
+            confidence: 0,
+            changes: [],
+            summary: 'AI service authentication failed - invalid API key',
+            warnings: ['Please check your Anthropic API key configuration']
+          },
+          { status: 500 }
+        );
+      }
+
+      if (anthropicError.status === 429) {
+        return NextResponse.json(
+          {
+            understood: false,
+            confidence: 0,
+            changes: [],
+            summary: 'AI service rate limit exceeded',
+            warnings: ['Too many requests. Please try again later.']
+          },
+          { status: 500 }
+        );
+      }
+
+      if (anthropicError.status === 402 || anthropicError.message?.includes('credit balance is too low')) {
+        // For demo purposes, return a mock response when credits are exhausted
+        return NextResponse.json({
+          understood: true,
+          confidence: 0.8,
+          changes: [
+            {
+              entityType: 'client',
+              entityId: context.clients[0]?.id || 1,
+              field: 'priority',
+              oldValue: 'medium',
+              newValue: 'high',
+              reasoning: 'Demo response - Anthropic API credits exhausted. Please add credits to enable full AI functionality.'
+            }
+          ],
+          summary: `DEMO MODE: AI credits exhausted. Command: "${command}" - This is a mock response for demonstration.`,
+          warnings: ['⚠️ Anthropic API credits exhausted. Add credits at console.anthropic.com for full AI functionality.']
+        });
+      }
+
+      // Generic error fallback
+      return NextResponse.json(
+        {
+          understood: false,
+          confidence: 0,
+          changes: [],
+          summary: `AI service error: ${anthropicError.message || 'Unknown error'}`,
+          warnings: ['AI service temporarily unavailable']
+        },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json(
-      { error: 'Unexpected response format' },
-      { status: 500 }
-    );
 
   } catch (error) {
     console.error('AI Data Modification Error:', error);

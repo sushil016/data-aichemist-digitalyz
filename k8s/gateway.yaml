@@ -1,0 +1,29 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: aichemist-gateway
+  annotations:
+    alb.networking.azure.io/alb-id: /subscriptions/1571eb72-3ee2-45e6-b0e6-3b3e0060f0a2/resourceGroups/ggPower/providers/Microsoft.ServiceNetworking/trafficControllers/alb-aichemist
+    cert-manager.io/issuer: letsencrypt-cert-aichemist
+    service.beta.kubernetes.io/azure-pip-name: playstation-api-static-ip
+spec:
+  gatewayClassName: azure-alb-external
+  listeners:
+    - name: http-listener
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: https-listener
+      port: 443
+      protocol: HTTPS
+      tls:
+        certificateRefs:
+          - name: letsencrypt-secret-aichemist
+      allowedRoutes:
+        namespaces:
+          from: Same
+  addresses:
+    - type: alb.networking.azure.io/alb-frontend
+      value: "test-frontend"

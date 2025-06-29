@@ -719,6 +719,9 @@ export const useDataStore = create<DataState>()(
               parsedData,
               fileName,
             };
+            // Clear the file upload state since we're now in header mapping phase
+            state.fileUpload.isUploading = false;
+            state.fileUpload.progress = 100;
           });
         },
 

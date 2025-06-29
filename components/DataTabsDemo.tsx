@@ -71,176 +71,182 @@ export const DataTabsDemo: React.FC = () => {
   const totalWarnings = validationErrors.filter(e => e.severity === 'warning').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-10 shadow-xl">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  🧪 Data Alchemist Dashboard
-                </h1>
-                <p className="mt-2 text-slate-300">
-                  Complete data management with file upload, validation, and real-time editing
-                </p>
-                
-                {/* Stats Summary in Header */}
-                <div className="mt-4 flex items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-full">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <span className="text-indigo-700 font-medium">
-                      {totalEntities} Total Entities
-                    </span>
+          <div className="py-4">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+              {/* Title Section */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">DA</span>
                   </div>
-                  {totalErrors > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-red-50 rounded-full">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-red-700 font-medium">
-                        {totalErrors} Errors
-                      </span>
-                    </div>
-                  )}
-                  {totalWarnings > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                      <span className="text-amber-700 font-medium">
-                        {totalWarnings} Warnings
-                      </span>
-                    </div>
-                  )}
-                  {businessRules.length > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-cyan-50 rounded-full">
-                      <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-cyan-700 font-medium">
-                        {businessRules.filter(r => r.active).length}/{businessRules.length} Rules Active
-                      </span>
-                    </div>
-                  )}
-                  {fileUpload.isUploading && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
-                      <div className="animate-spin w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                      <span className="text-blue-700 font-medium">
-                        Uploading {Math.round(fileUpload.progress)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
+                  Data Alchemist Dashboard
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  Intelligent data management with AI-powered validation and processing
+                </p>
               </div>
               
-              <div className="flex items-center gap-3">
-                {/* Action Buttons */}
-                <button
-                  onClick={() => setShowFileUpload(!showFileUpload)}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    showFileUpload
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-600 hover:to-green-700 focus:ring-emerald-500 shadow-emerald-200'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-500'
-                  )}
-                >
-                  {showFileUpload ? '📤 Hide Upload' : '📤 Show Upload'}
-                </button>
-                
-                <button
-                  onClick={actions.addSampleData}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl font-medium
-                            hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 
-                            focus:ring-indigo-500 focus:ring-offset-2 shadow-sm shadow-indigo-200"
-                >
-                  Add Sample Data
-                </button>
-                
-                <button
-                  onClick={actions.exportAll}
-                  disabled={totalEntities === 0}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    totalEntities === 0
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 focus:ring-green-500 shadow-green-200'
-                  )}
-                >
-                  Export All Data
-                </button>
-                
-                <button
-                  onClick={actions.clearAllData}
-                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-medium
-                            hover:from-red-600 hover:to-rose-700 transition-all duration-200 focus:outline-none focus:ring-2 
-                            focus:ring-red-500 focus:ring-offset-2 shadow-sm shadow-red-200"
-                >
-                  Clear All Data
-                </button>
-                
-                <button
-                  onClick={() => setShowValidationPanel(!showValidationPanel)}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    showValidationPanel
-                      ? 'bg-gradient-to-r from-purple-500 to-violet-600 text-white hover:from-purple-600 hover:to-violet-700 focus:ring-purple-500 shadow-purple-200'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-500'
-                  )}
-                >
-                  {showValidationPanel ? '🔍 Hide Validation' : '🔍 Show Validation'}
-                </button>
-
-                <button
-                  onClick={() => setShowBusinessRules(!showBusinessRules)}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    showBusinessRules
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 focus:ring-cyan-500 shadow-cyan-200'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-500'
-                  )}
-                >
-                  {showBusinessRules ? '🤖 Hide AI Rules' : '🤖 AI Rules'}
-                </button>
-
-                <button
-                  onClick={() => setShowAIRecommendations(!showAIRecommendations)}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    showAIRecommendations
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 focus:ring-amber-500 shadow-amber-200'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-500'
-                  )}
-                >
-                  {showAIRecommendations ? '💡 Hide Suggestions' : '💡 AI Suggestions'}
-                </button>
-
-                <button
-                  onClick={() => setShowPrioritization(!showPrioritization)}
-                  className={cn(
-                    'px-4 py-2 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm',
-                    showPrioritization
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700 focus:ring-purple-500 shadow-purple-200'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-500'
-                  )}
-                >
-                  {showPrioritization ? '⚖️ Hide Weights' : '⚖️ Prioritization'}
-                </button>
+              {/* Quick Stats */}
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <span className="text-blue-700 font-medium">
+                    {totalEntities} Entities
+                  </span>
+                </div>
+                {totalErrors > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span className="text-red-700 font-medium">
+                      {totalErrors} Errors
+                    </span>
+                  </div>
+                )}
+                {totalWarnings > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-yellow-700 font-medium">
+                      {totalWarnings} Warnings
+                    </span>
+                  </div>
+                )}
+                {businessRules.length > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-green-700 font-medium">
+                      {businessRules.filter(r => r.active).length} Rules
+                    </span>
+                  </div>
+                )}
+                {fileUpload.isUploading && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                    <div className="animate-spin w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-blue-700 font-medium">
+                      {Math.round(fileUpload.progress)}%
+                    </span>
+                  </div>
+                )}
               </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowFileUpload(!showFileUpload)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  showFileUpload
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                )}
+              >
+                {showFileUpload ? 'Hide' : 'Show'} Upload
+              </button>
+              
+              <button
+                onClick={actions.addSampleData}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all duration-200"
+              >
+                Sample Data
+              </button>
+              
+              <button
+                onClick={actions.exportAll}
+                disabled={totalEntities === 0}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  totalEntities === 0
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                )}
+              >
+                Export Data
+              </button>
+              
+              <button
+                onClick={actions.clearAllData}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all duration-200"
+              >
+                Clear All
+              </button>
+              
+              <div className="w-px h-6 bg-gray-300 mx-2"></div>
+              
+              <button
+                onClick={() => setShowValidationPanel(!showValidationPanel)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  showValidationPanel
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                )}
+              >
+                Validation
+              </button>
+
+              <button
+                onClick={() => setShowBusinessRules(!showBusinessRules)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  showBusinessRules
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                )}
+              >
+                AI Rules
+              </button>
+
+              <button
+                onClick={() => setShowAIRecommendations(!showAIRecommendations)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  showAIRecommendations
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                )}
+              >
+                Suggestions
+              </button>
+
+              <button
+                onClick={() => setShowPrioritization(!showPrioritization)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  showPrioritization
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                )}
+              >
+                Prioritization
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Natural Language Search Bar */}
-      <div className="max-w-7xl mx-auto px-6 -mt-8 relative z-10">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-          <div className="mb-3">
-            <h3 className="text-lg font-semibold text-slate-700 mb-1">🤖 AI-Powered Search</h3>
-            <p className="text-sm text-slate-600">Ask questions in plain English to find and filter your data</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              AI-Powered Search
+            </h3>
+            <p className="text-sm text-gray-600">
+              Ask questions in plain English to find and filter your data
+            </p>
           </div>
           <NaturalLanguageSearch
             onResultsChange={setHasSearchResults}
             className="w-full"
           />
           {hasSearchResults && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700">
-                💡 <strong>Tip:</strong> Search results are highlighted in the data grid below. Use the tabs to view specific entity types.
+                <strong>Tip:</strong> Search results are highlighted in the data grid below.
               </p>
             </div>
           )}
@@ -251,70 +257,64 @@ export const DataTabsDemo: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* File Upload Section */}
         {showFileUpload && (
-          <div className="mb-8">
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8">
-              <h2 className="text-2xl font-bold text-slate-800 mb-8 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-lg">📤</span>
+          <div className="mb-[900px]">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">UP</span>
                 </div>
-                <span>Upload Data Files</span>
+                Upload Data Files
               </h2>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Client Upload */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">👥</span>
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">C</span>
                     </div>
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-                      Client Data
-                    </h3>
+                    <h3 className="text-lg font-medium text-gray-900">Client Data</h3>
                   </div>
                   <DragDropFileUpload
                     entityType="client"
-                    className="h-36 border-2 border-dashed border-blue-300 bg-blue-50/50 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                    className="h-32 border-2 border-dashed border-blue-300 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all duration-200 rounded-lg"
                   />
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    Upload CSV/XLSX files containing client information and business data
+                  <p className="text-sm text-gray-600">
+                    Upload CSV/XLSX files containing client information
                   </p>
                 </div>
                 
                 {/* Worker Upload */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">👷</span>
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">W</span>
                     </div>
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-                      Worker Data
-                    </h3>
+                    <h3 className="text-lg font-medium text-gray-900">Worker Data</h3>
                   </div>
                   <DragDropFileUpload
                     entityType="worker"
-                    className="h-36 border-2 border-dashed border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 hover:bg-emerald-50 transition-all duration-200"
+                    className="h-32 border-2 border-dashed border-blue-300 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all duration-200 rounded-lg"
                   />
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    Upload CSV/XLSX files containing worker profiles and skill information
+                  <p className="text-sm text-gray-600">
+                    Upload CSV/XLSX files containing worker profiles
                   </p>
                 </div>
                 
                 {/* Task Upload */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">📋</span>
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">T</span>
                     </div>
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-700 bg-clip-text text-transparent">
-                      Task Data
-                    </h3>
+                    <h3 className="text-lg font-medium text-gray-900">Task Data</h3>
                   </div>
                   <DragDropFileUpload
                     entityType="task"
-                    className="h-36 border-2 border-dashed border-purple-300 bg-purple-50/50 hover:border-purple-400 hover:bg-purple-50 transition-all duration-200"
+                    className="h-32 border-2 border-dashed border-blue-300 bg-blue-50 hover:border-blue-400 hover:bg-blue-100 transition-all duration-200 rounded-lg"
                   />
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    Upload CSV/XLSX files containing task definitions and requirements
+                  <p className="text-sm text-gray-600">
+                    Upload CSV/XLSX files containing task definitions
                   </p>
                 </div>
               </div>
@@ -325,30 +325,29 @@ export const DataTabsDemo: React.FC = () => {
         {/* Business Rules and AI Section */}
         {(showBusinessRules || showAIRecommendations || showPrioritization) && (
           <div className="mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Natural Language Rule Converter */}
               {showBusinessRules && (
-                <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8">
-                  <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-lg">🤖</span>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">AI</span>
                     </div>
-                    <span>AI Rule Builder</span>
+                    AI Rule Builder
                   </h2>
                   
                   <div className="mb-6">
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      Create business rules using natural language. Type rules like "Client A must run before Client B" 
-                      or "Workers in Frontend group can only work on UI tasks".
+                    <p className="text-gray-600 text-sm">
+                      Create business rules using natural language. Type rules like "Client A must run before Client B".
                     </p>
                   </div>
                   
                   <NaturalLanguageRuleConverter />
                   
                   {businessRules.length > 0 && (
-                    <div className="mt-6 p-4 bg-slate-50 rounded-xl">
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-slate-700">Active Rules ({businessRules.filter(r => r.active).length})</h4>
+                        <h4 className="font-medium text-gray-900">Active Rules ({businessRules.filter(r => r.active).length})</h4>
                         <a 
                           href="/business-rules-demo" 
                           className="text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -359,7 +358,7 @@ export const DataTabsDemo: React.FC = () => {
                       <div className="space-y-2 max-h-32 overflow-y-auto">
                         {businessRules.slice(0, 3).map((rule) => (
                           <div key={rule.id} className="flex items-center justify-between text-sm">
-                            <span className={rule.active ? 'text-slate-700' : 'text-slate-400'}>
+                            <span className={rule.active ? 'text-gray-700' : 'text-gray-400'}>
                               {rule.name}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs ${
@@ -370,7 +369,7 @@ export const DataTabsDemo: React.FC = () => {
                           </div>
                         ))}
                         {businessRules.length > 3 && (
-                          <div className="text-xs text-slate-500 text-center pt-2">
+                          <div className="text-xs text-gray-500 text-center pt-2">
                             +{businessRules.length - 3} more rules
                           </div>
                         )}
@@ -382,12 +381,12 @@ export const DataTabsDemo: React.FC = () => {
 
               {/* AI Recommendations Panel */}
               {showAIRecommendations && (
-                <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8">
-                  <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-lg">💡</span>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">REC</span>
                     </div>
-                    <span>AI Recommendations</span>
+                    AI Recommendations
                   </h2>
                   
                   <AIRecommendationsPanel />
@@ -397,18 +396,18 @@ export const DataTabsDemo: React.FC = () => {
               {/* Prioritization & Weights */}
               {showPrioritization && (
                 <div className={cn(
-                  "bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8",
+                  "bg-white rounded-lg shadow-sm border border-gray-200 p-6",
                   (showBusinessRules || showAIRecommendations) ? "xl:col-span-1" : "lg:col-span-2"
                 )}>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-lg">⚖️</span>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">PRI</span>
                     </div>
-                    <span>Prioritization</span>
+                    Prioritization
                   </h2>
                   
                   <div className="mb-6">
-                    <p className="text-slate-600 text-sm leading-relaxed">
+                    <p className="text-gray-600 text-sm">
                       Configure priority profiles and weighting criteria for intelligent resource allocation.
                     </p>
                   </div>
@@ -417,12 +416,12 @@ export const DataTabsDemo: React.FC = () => {
                     <AdvancedPrioritizationBuilder />
                   </div>
                   
-                  <div className="mt-6 p-4 bg-purple-50 rounded-xl">
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-purple-700">Full Configuration</span>
+                      <span className="text-sm font-medium text-blue-700">Full Configuration</span>
                       <a 
                         href="/prioritization-demo" 
-                        className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                       >
                         Open Full Editor →
                       </a>
@@ -435,10 +434,10 @@ export const DataTabsDemo: React.FC = () => {
         )}
 
         {/* Main Data Management Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Data Grid Area */}
           <div className={cn(
-            'bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden',
+            'bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden',
             showValidationPanel ? 'lg:col-span-2' : 'lg:col-span-3'
           )}>
             {/* Data Tabs Navigation */}
@@ -448,30 +447,28 @@ export const DataTabsDemo: React.FC = () => {
             />
 
             {/* Data Grid Content */}
-            <div className="p-8">
+            <div className="p-6">
               {totalEntities === 0 ? (
                 <div className="text-center py-16">
-                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center">
-                    <span className="text-4xl">📊</span>
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <span className="text-gray-600 font-bold text-lg">DATA</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-800 mb-3">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
                     No Data Available
                   </h3>
-                  <p className="text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+                  <p className="text-gray-600 mb-8 max-w-md mx-auto">
                     Upload files or load sample data to get started with the data management platform and explore all features.
                   </p>
                   <div className="flex items-center justify-center gap-4">
                     <button
                       onClick={actions.addSampleData}
-                      className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl font-medium
-                                hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg shadow-indigo-200"
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
                     >
                       Load Sample Data
                     </button>
                     <button
                       onClick={() => setShowFileUpload(true)}
-                      className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-medium
-                                hover:from-emerald-600 hover:to-green-700 transition-all duration-200 shadow-lg shadow-emerald-200"
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all duration-200"
                     >
                       Upload Files
                     </button>
@@ -482,24 +479,24 @@ export const DataTabsDemo: React.FC = () => {
                   <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center text-white text-lg',
-                        activeTab === 'client' && 'bg-gradient-to-r from-blue-500 to-indigo-600',
-                        activeTab === 'worker' && 'bg-gradient-to-r from-emerald-500 to-green-600',
-                        activeTab === 'task' && 'bg-gradient-to-r from-purple-500 to-violet-600'
+                        'w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold',
+                        activeTab === 'client' && 'bg-blue-600',
+                        activeTab === 'worker' && 'bg-blue-600',
+                        activeTab === 'task' && 'bg-blue-600'
                       )}>
-                        {activeTab === 'client' && '👥'} 
-                        {activeTab === 'worker' && '👷'} 
-                        {activeTab === 'task' && '📋'}
+                        {activeTab === 'client' && 'C'} 
+                        {activeTab === 'worker' && 'W'} 
+                        {activeTab === 'task' && 'T'}
                       </div>
-                      <h3 className="text-xl font-semibold text-slate-800">
+                      <h3 className="text-xl font-semibold text-gray-900">
                         {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Data
-                        <span className="ml-2 text-slate-500 font-normal">({currentData.length} items)</span>
+                        <span className="ml-2 text-gray-500 font-normal">({currentData.length} items)</span>
                       </h3>
                     </div>
                     
                     {fileUpload.isUploading && (
-                      <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-xl">
-                        <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                      <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
                         <span className="text-blue-700 font-medium">
                           Uploading... {Math.round(fileUpload.progress)}%
                         </span>
@@ -507,7 +504,7 @@ export const DataTabsDemo: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="bg-slate-50/50 rounded-xl border border-slate-200/60">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200">
                     <DataGrid
                       entityType={activeTab}
                       data={currentData as any}
@@ -521,14 +518,14 @@ export const DataTabsDemo: React.FC = () => {
 
           {/* Validation Panel */}
           {showValidationPanel && (
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden">
-              <div className="p-6 bg-gradient-to-r from-purple-50 to-violet-50 border-b border-purple-100">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-lg">🔍</span>
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">VAL</span>
                     </div>
-                    <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-700 bg-clip-text text-transparent">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       Validation Status
                     </h3>
                   </div>
@@ -539,12 +536,12 @@ export const DataTabsDemo: React.FC = () => {
                       </span>
                     )}
                     {totalWarnings > 0 && (
-                      <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-medium">
+                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                         {totalWarnings} warnings
                       </span>
                     )}
                     {totalErrors === 0 && totalWarnings === 0 && (
-                      <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
                         All Good
                       </span>
                     )}
@@ -560,58 +557,58 @@ export const DataTabsDemo: React.FC = () => {
         </div>
 
         {/* Entity Stats Summary */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8 hover:shadow-xl transition-all duration-300">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-3xl">👥</span>
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">C</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Clients</p>
-                <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Clients</p>
+                <p className="text-3xl font-bold text-gray-900">
                   {clients.length}
                 </p>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   {validationErrors.filter(e => e.entityId?.startsWith('C')).length} validation issues
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8 hover:shadow-xl transition-all duration-300">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-3xl">👷</span>
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">W</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Workers</p>
-                <p className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Workers</p>
+                <p className="text-3xl font-bold text-gray-900">
                   {workers.length}
                 </p>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   {validationErrors.filter(e => e.entityId?.startsWith('W')).length} validation issues
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8 hover:shadow-xl transition-all duration-300">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-3xl">📋</span>
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">T</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Tasks</p>
-                <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-violet-700 bg-clip-text text-transparent">
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Tasks</p>
+                <p className="text-3xl font-bold text-gray-900">
                   {tasks.length}
                 </p>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   {validationErrors.filter(e => e.entityId?.startsWith('T')).length} validation issues
                 </p>
               </div>

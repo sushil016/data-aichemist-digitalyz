@@ -70,9 +70,7 @@ export default function AIFeaturesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-4">
-              <span className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
-                🤖
-              </span>
+
               AI Features Showcase
             </h1>
             <p className="mt-3 text-white/90 text-lg">
@@ -204,86 +202,8 @@ export default function AIFeaturesPage() {
         </div>
       </div>
 
-      {/* Feature Comparison */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">
-          Milestone 3 Features Comparison
-        </h3>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left py-3 font-semibold text-slate-700">Feature</th>
-                <th className="text-left py-3 font-semibold text-slate-700">Basic Mode</th>
-                <th className="text-left py-3 font-semibold text-slate-700">AI Enhanced</th>
-                <th className="text-left py-3 font-semibold text-slate-700">Status</th>
-              </tr>
-            </thead>
-            <tbody className="space-y-2">
-              <tr className="border-b border-slate-100">
-                <td className="py-3 font-medium">Data Modification</td>
-                <td className="py-3 text-slate-600">Manual form edits</td>
-                <td className="py-3 text-slate-600">Natural language commands</td>
-                <td className="py-3">
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                    ✅ Implemented
-                  </span>
-                </td>
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="py-3 font-medium">Error Correction</td>
-                <td className="py-3 text-slate-600">Manual error fixing</td>
-                <td className="py-3 text-slate-600">AI-powered fix suggestions</td>
-                <td className="py-3">
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                    ✅ Implemented
-                  </span>
-                </td>
-              </tr>
-              <tr className="border-b border-slate-100">
-                <td className="py-3 font-medium">Rule Recommendations</td>
-                <td className="py-3 text-slate-600">Basic pattern detection</td>
-                <td className="py-3 text-slate-600">Advanced AI pattern analysis</td>
-                <td className="py-3">
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                    ✅ Enhanced
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Getting Started Guide */}
-      {stats.clients === 0 && stats.workers === 0 && stats.tasks === 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">
-            🚀 Get Started with AI Features
-          </h3>
-          <div className="grid md:grid-cols-3 gap-4 text-sm">
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <div className="font-medium text-blue-700 mb-2">1. Upload Data</div>
-              <div className="text-slate-600">
-                Upload your clients, workers, and tasks data to enable AI analysis
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <div className="font-medium text-blue-700 mb-2">2. Fix Errors</div>
-              <div className="text-slate-600">
-                Use AI error correction to automatically fix validation issues
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <div className="font-medium text-blue-700 mb-2">3. Apply Recommendations</div>
-              <div className="text-slate-600">
-                Get AI-generated business rule recommendations based on patterns
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
+      
     </div>
   );
 }

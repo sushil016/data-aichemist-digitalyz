@@ -1,0 +1,288 @@
+
+
+name: Data Alchemist CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  AZURE_RESOURCE_GROUP: rg-data-alchemist
+  AKS_CLUSTER_NAME: aks-data-alchemist
+  NAMESPACE: data-alchemist
+
+jobs:
+ 
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run type checking
+      run: npx tsc --noEmit
+      
+    - name: Run tests
+      run: npm test
+      env:
+        NODE_ENV: test
+        
+    - name: Build application
+      run: npm run build
+      env:
+        NODE_ENV: production
+        NEXT_TELEMETRY_DISABLED: 1
+        
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix=commit-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ needs.build-and-test.outputs.image-tag }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+   #staging deployment
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+        
+    - name: Get AKS credentials
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --name ${{ env.AKS_CLUSTER_NAME }} \
+          --overwrite-existing
+          
+    - name: Create namespace
+      run: |
+        kubectl create namespace ${{ env.NAMESPACE }}-staging --dry-run=client -o yaml | kubectl apply -f -
+        
+    - name: Deploy to Kubernetes
+      run: |
+        envsubst < k8s/staging/kustomization.yaml | kubectl apply -k -
+      env:
+        IMAGE_TAG: ${{ needs.build-and-test.outputs.image-tag }}
+        NAMESPACE: ${{ env.NAMESPACE }}-staging
+        ENVIRONMENT: staging
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_STAGING }}
+        
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/data-alchemist \
+          -n ${{ env.NAMESPACE }}-staging \
+          --timeout=300s
+          
+    - name: Run smoke tests
+      run: |
+        kubectl wait --for=condition=ready pod \
+          -l app=data-alchemist \
+          -n ${{ env.NAMESPACE }}-staging \
+          --timeout=300s
+        
+        # Get service endpoint and test
+        ENDPOINT=$(kubectl get svc data-alchemist-service -n ${{ env.NAMESPACE }}-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        curl -f http://$ENDPOINT/api/health || exit 1
+
+  #prod
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+        
+    - name: Get AKS credentials
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --name ${{ env.AKS_CLUSTER_NAME }} \
+          --overwrite-existing
+          
+    - name: Create namespace
+      run: |
+        kubectl create namespace ${{ env.NAMESPACE }}-production --dry-run=client -o yaml | kubectl apply -f -
+        
+    - name: Deploy to Kubernetes
+      run: |
+        envsubst < k8s/production/kustomization.yaml | kubectl apply -k -
+      env:
+        IMAGE_TAG: ${{ needs.build-and-test.outputs.image-tag }}
+        NAMESPACE: ${{ env.NAMESPACE }}-production
+        ENVIRONMENT: production
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_PRODUCTION }}
+        
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/data-alchemist \
+          -n ${{ env.NAMESPACE }}-production \
+          --timeout=600s
+          
+    - name: Run production health checks
+      run: |
+        kubectl wait --for=condition=ready pod \
+          -l app=data-alchemist \
+          -n ${{ env.NAMESPACE }}-production \
+          --timeout=600s
+        
+        # Get service endpoint and test
+        ENDPOINT=$(kubectl get svc data-alchemist-service -n ${{ env.NAMESPACE }}-production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        curl -f http://$ENDPOINT/api/health || exit 1
+        
+    - name: Create GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          🚀 **Data Alchemist Release v${{ github.run_number }}**
+          
+          **Changes in this release:**
+          - Automated deployment to production
+          - Image: ${{ needs.build-and-test.outputs.image-tag }}
+          - Commit: ${{ github.sha }}
+          
+          **Deployment Status:**
+          - ✅ Build and Tests: Passed
+          - ✅ Security Scan: Passed  
+          - ✅ Production Deployment: Successful
+          
+          **Monitoring:**
+          - Health Check: https://dataalchemist.yourdomain.com/api/health
+          - Application: https://dataalchemist.yourdomain.com
+        draft: false
+        prerelease: false
+
+  cleanup:
+    name: Cleanup Old Resources
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Cleanup old container images
+      run: |
+        # Keep only last 10 images
+        az acr repository show-tags \
+          --name ${{ secrets.ACR_NAME }} \
+          --repository ${{ env.IMAGE_NAME }} \
+          --orderby time_desc \
+          --output tsv \
+          | tail -n +11 \
+          | xargs -I {} az acr repository delete \
+            --name ${{ secrets.ACR_NAME }} \
+            --image ${{ env.IMAGE_NAME }}:{} \
+            --yes

@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-aichemist
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory # production endpoint
+    #server: https://acme-staging-v02.api.letsencrypt.org/directory # staging endpoint
+    email: sushil.sahani-coemumbai@bvp.edu.in
+    privateKeySecretRef:
+      name: letsencrypt-private-key
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: aichemist-public-httproute
+                namespace: default
+                kind: Gateway
